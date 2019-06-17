@@ -8,6 +8,8 @@
 
 //
 `include "./../rtl/wt_common/wt_fir.sv"
+`include "./../rtl/idwt_core.sv"
+`include "./../rtl/dwt_core.sv"
 
 //--------------------------------------------------------------------------------------------------------
 // Parameters
