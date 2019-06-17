@@ -8,6 +8,7 @@ vlog +initreg+0 +initmem+0 -sv -mfcu \
 ${INC_DIR}/header_wt_core.svh        \
 ${TB_DIR}/*.sv                       \
 ${RTL_DIR}/idwt_core.sv              \
+${RTL_DIR}/dwt_core.sv               \
 ${RTL_DIR}/wt_common/wt_fir.sv
 
-vsim +initreg+0 +initmem+0 -novopt -L 220model_ver tb_idwt_core
+vsim +initreg+0 +initmem+0 -novopt -L 220model_ver tb_dwt_core

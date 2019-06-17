@@ -88,7 +88,7 @@ module idwt_core
   //--------------------------------------------------------------------------------------------------------
   
   always_ff@(posedge iclk) begin
-    if (hfir__oena) begin
+    if (hfir__oena | lfir__oena) begin
       sum <= $signed(hfir__odat) + $signed(lfir__odat);
     end
     //
@@ -111,19 +111,19 @@ module idwt_core
   assign hfir__iclk_ena  = iclk_enax2;
   assign hfir__irst      = irst;
   assign hfir__iena      = iena;
-  assign hfir__idat      = (iclk_ena) ? (idatH) : ('0);
+  assign hfir__idat      = (iclk_ena) ? (idatH) : ('0); // Interpolation
   // Low filter
   assign lfir__iclk      = iclk;
   assign lfir__iclk_ena  = iclk_enax2;
   assign lfir__irst      = irst;
   assign lfir__iena      = iena;
-  assign lfir__idat      = (iclk_ena) ? (idatL) : ('0);
+  assign lfir__idat      = (iclk_ena) ? (idatL) : ('0); // Interpolation
 
   wt_fir
   #(
-    . pWIDTH     ($size(pDB6_Hi_D[0]) ) ,
-    . pORDER     ($size(pDB6_Hi_D)    ) ,
-    . cCOEFS     (pDB6_Hi_D           )
+    . pWIDTH     ($size(pDB6_Hi_R[0]) ) ,
+    . pORDER     ($size(pDB6_Hi_R)    ) ,
+    . cCOEFS     (pDB6_Hi_R           )
   )
   hfir__
   (
@@ -138,9 +138,9 @@ module idwt_core
 
   wt_fir
   #(
-    . pWIDTH     ($size(pDB6_Lo_D[0]) ) ,
-    . pORDER     ($size(pDB6_Lo_D)    ) ,
-    . cCOEFS     (pDB6_Lo_D           )
+    . pWIDTH     ($size(pDB6_Lo_R[0]) ) ,
+    . pORDER     ($size(pDB6_Lo_R)    ) ,
+    . cCOEFS     (pDB6_Lo_R           )
   )
   lfir__
   (
