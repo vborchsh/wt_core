@@ -1,29 +1,60 @@
 
+/*
+  localparam int pWIDTH = 12;
+
+  logic                  idwt__iclk      ;
+  logic                  idwt__iclk_ena  ;
+  logic                  idwt__iclk_enax2;
+  logic                  idwt__irst      ;
+  logic                  idwt__iena      ;
+  logic     [pWIDTH-1:0] idwt__idatH     ;
+  logic     [pWIDTH-1:0] idwt__idatL     ;
+  logic                  idwt__oena      ;
+  logic   [2*pWIDTH-1:0] idwt__odat      ;
+
+  assign iclk       = ;
+  assign iclk_ena   = ;
+  assign iclk_enax2 = ;
+  assign irst       = ;
+  assign iena       = ;
+  assign idatH      = ;
+  assign idatL      = ;
+
+  idwt_core
+  #(
+    . pWIDTH         (pWIDTH)
+  )
+  idwt__
+  (
+    . iclk           (idwt__iclk           ) ,
+    . iclk_ena       (idwt__iclk_ena       ) ,
+    . iclk_enax2     (idwt__iclk_enax2     ) ,
+    . irst           (idwt__irst           ) ,
+    . iena           (idwt__iena           ) ,
+    . idatH          (idwt__idatH          ) ,
+    . idatL          (idwt__idatL          ) ,
+    . oena           (idwt__oena           ) ,
+    . odat           (idwt__odat           )
+  );
+*/
+
 module idwt_core
   #(
-    parameter int pWIDTH          = "ext"
+    parameter int pWIDTH = "ext"
   )
   (
-    input                            iclk     ,
-    input                            iclk_ena ,
-    input                            irst     ,
-    input                            iena     ,
-    input               [pWIDTH-1:0] idatHI   ,
-    input               [pWIDTH-1:0] idatHQ   ,
-    input               [pWIDTH-1:0] idatLI   ,
-    input               [pWIDTH-1:0] idatLQ   ,
-    output                           oena     ,
-    output            [2*pWIDTH-1:0] odatI    ,
-    output            [2*pWIDTH-1:0] odatQ
+    input                            iclk      ,
+    input                            iclk_ena  ,
+    input                            iclk_enax2,
+    input                            irst      ,
+    input                            iena      ,
+    input               [pWIDTH-1:0] idatH     ,
+    input               [pWIDTH-1:0] idatL     ,
+    output                           oena      ,
+    output            [2*pWIDTH-1:0] odat
   );
 
-  //--------------------------------------------------------------------------------------------------------
-  // Declaration parameters
-  //--------------------------------------------------------------------------------------------------------
-
-  localparam int pORDER        = 12;
-  localparam int cL_D [pORDER] = '{-3,9,1,-65,56,199,-266,-464,645,1538,1012,228};
-  localparam int cH_D [pORDER] = '{-229,1012,-1539,645,463,-266,-200,56,64,1,-10,-3};
+  `include "./../include/header_wavelets.svh"
 
   //--------------------------------------------------------------------------------------------------------
   // Declaration modules wires
@@ -33,29 +64,24 @@ module idwt_core
   wire                    hfir__iclk_ena;
   wire                    hfir__irst    ;
   wire                    hfir__iena    ;
-  wire       [pWIDTH-1:0] hfir__idatI   ;
-  wire       [pWIDTH-1:0] hfir__idatQ   ;
+  wire       [pWIDTH-1:0] hfir__idat    ;
   wire                    hfir__oena    ;
-  wire     [2*pWIDTH-1:0] hfir__odatI   ;
-  wire     [2*pWIDTH-1:0] hfir__odatQ   ;
+  wire     [2*pWIDTH-1:0] hfir__odat    ;
 
   wire                    lfir__iclk    ;
   wire                    lfir__iclk_ena;
   wire                    lfir__irst    ;
   wire                    lfir__iena    ;
-  wire       [pWIDTH-1:0] lfir__idatI   ;
-  wire       [pWIDTH-1:0] lfir__idatQ   ;
+  wire       [pWIDTH-1:0] lfir__idat    ;
   wire                    lfir__oena    ;
-  wire     [2*pWIDTH-1:0] lfir__odatI   ;
-  wire     [2*pWIDTH-1:0] lfir__odatQ   ;
+  wire     [2*pWIDTH-1:0] lfir__odat    ;
 
   //--------------------------------------------------------------------------------------------------------
   // Declaration variables
   //--------------------------------------------------------------------------------------------------------
 
-  logic                   ena;
-  logic    [2*pWIDTH-1:0] sumI;
-  logic    [2*pWIDTH-1:0] sumQ;
+  logic                 ena;
+  logic    [2*pWIDTH:0] sum;
 
   //--------------------------------------------------------------------------------------------------------
   // BODY
@@ -63,76 +89,68 @@ module idwt_core
   
   always_ff@(posedge iclk) begin
     if (hfir__oena) begin
-      sumI <= hfir__odatI + lfir__odatI;
-      sumQ <= hfir__odatI + lfir__odatQ;
+      sum <= $signed(hfir__odat) + $signed(lfir__odat);
     end
     //
-    ena <= hfir__oena;
+    ena <= hfir__oena | lfir__oena;
   end
 
   //--------------------------------------------------------------------------------------------------------
   // Output signals
   //--------------------------------------------------------------------------------------------------------
 
-  assign oena  = ena;
-  assign odatI = sumI;
-  assign odatQ = sumQ;
+  assign oena = ena;
+  assign odat = sum;
 
   //--------------------------------------------------------------------------------------------------------
   // Modules
   //--------------------------------------------------------------------------------------------------------
 
   // High filter
-  assign hfir__iclk      = iclk    ;
-  assign hfir__iclk_ena  = iclk_ena;
-  assign hfir__irst      = irst    ;
-  assign hfir__iena      = iena    ;
-  assign hfir__idatI     = idatHI  ;
-  assign hfir__idatQ     = idatHQ  ;
+  assign hfir__iclk      = iclk;
+  assign hfir__iclk_ena  = iclk_enax2;
+  assign hfir__irst      = irst;
+  assign hfir__iena      = iena;
+  assign hfir__idat      = (iclk_ena) ? (idatH) : ('0);
   // Low filter
-  assign lfir__iclk      = iclk    ;
-  assign lfir__iclk_ena  = iclk_ena;
-  assign lfir__irst      = irst    ;
-  assign lfir__iena      = iena    ;
-  assign lfir__idatI     = idatLI  ;
-  assign lfir__idatQ     = idatLQ  ;
+  assign lfir__iclk      = iclk;
+  assign lfir__iclk_ena  = iclk_enax2;
+  assign lfir__irst      = irst;
+  assign lfir__iena      = iena;
+  assign lfir__idat      = (iclk_ena) ? (idatL) : ('0);
 
-  wvlt_fir
+  wt_fir
   #(
-    . pWIDTH     (pWIDTH         ) ,
-    . pORDER     (pORDER         ) ,
-    . cCOEFS     (cH_D           )
+    . pWIDTH     ($size(pDB6_Hi_D[0]) ) ,
+    . pORDER     ($size(pDB6_Hi_D)    ) ,
+    . cCOEFS     (pDB6_Hi_D           )
   )
   hfir__
   (
-    . iclk       (hfir__iclk     ) ,
-    . iclk_ena   (hfir__iclk_ena ) ,
-    . irst       (hfir__irst     ) ,
-    . iena       (hfir__iena     ) ,
-    . idatI      (hfir__idatI    ) ,
-    . idatQ      (hfir__idatQ    ) ,
-    . oena       (hfir__oena     ) ,
-    . odatI      (hfir__odatI    ) ,
-    . odatQ      (hfir__odatQ    )
+    . iclk       (hfir__iclk          ) ,
+    . iclk_ena   (hfir__iclk_ena      ) ,
+    . irst       (hfir__irst          ) ,
+    . iena       (hfir__iena          ) ,
+    . idat       (hfir__idat          ) ,
+    . oena       (hfir__oena          ) ,
+    . odat       (hfir__odat          )
   );
 
-  wvlt_fir
+  wt_fir
   #(
-    . pWIDTH     (pWIDTH         ) ,
-    . pORDER     (pORDER         ) ,
-    . cCOEFS     (cL_D           )
+    . pWIDTH     ($size(pDB6_Lo_D[0]) ) ,
+    . pORDER     ($size(pDB6_Lo_D)    ) ,
+    . cCOEFS     (pDB6_Lo_D           )
   )
   lfir__
   (
-    . iclk       (lfir__iclk     ) ,
-    . iclk_ena   (lfir__iclk_ena ) ,
-    . irst       (lfir__irst     ) ,
-    . iena       (lfir__iena     ) ,
-    . idatI      (lfir__idatI    ) ,
-    . idatQ      (lfir__idatQ    ) ,
-    . oena       (lfir__oena     ) ,
-    . odatI      (lfir__odatI    ) ,
-    . odatQ      (lfir__odatQ    )
+    . iclk       (lfir__iclk          ) ,
+    . iclk_ena   (lfir__iclk_ena      ) ,
+    . irst       (lfir__irst          ) ,
+    . iena       (lfir__iena          ) ,
+    . idat       (lfir__idat          ) ,
+    . oena       (lfir__oena          ) ,
+    . odat       (lfir__odat          )
   );
 
 endmodule

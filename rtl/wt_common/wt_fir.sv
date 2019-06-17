@@ -37,27 +37,29 @@
 
 module wt_fir
   #(
-    parameter int pWIDTH          = "ext",
-    parameter int pORDER          = "ext",
-    parameter int cCOEFS [pORDER] = "ext"
+    parameter int              pWIDTH          = "ext",
+    parameter int              pORDER          = "ext",
+    parameter bit [pWIDTH-1:0] cCOEFS [pORDER] = "ext"
   )
   (
-    input                            iclk     ,
-    input                            iclk_ena ,
-    input                            irst     ,
-    input                            iena     ,
-    input               [pWIDTH-1:0] idat     ,
-    output                           oena     ,
-    output            [2*pWIDTH-1:0] odat
+    input                     iclk     ,
+    input                     iclk_ena ,
+    input                     irst     ,
+    input                     iena     ,
+    input        [pWIDTH-1:0] idat     ,
+    output                    oena     ,
+    output     [2*pWIDTH-1:0] odat
   );
 
   //--------------------------------------------------------------------------------------------------------
   // Declaration variables
   //--------------------------------------------------------------------------------------------------------
 
-  logic                     ena  ;
+  logic               [2:0] ena  ;
+  logic                     clk_ena;
   logic      [2*pWIDTH-1:0] mult [pORDER];
-  logic      [2*pWIDTH-1:0] acc  [pORDER];
+  logic      [2*pWIDTH-1:0] acc  ;
+  logic      [2*pWIDTH-1:0] dat  ;
   logic        [pWIDTH-1:0] z    [pORDER];
 
   //--------------------------------------------------------------------------------------------------------
@@ -70,34 +72,42 @@ module wt_fir
       z <= '{pORDER{'0}};
     end else if (iclk_ena) begin
       z[0] <= idat;
-      //
       for (int i = 1; i < pORDER; i++) begin
         z[i] <= z[i-1];
       end
     end
   end
 
+  // Multipliers
   always_ff@(posedge iclk) begin
+    clk_ena <= iclk_ena;
     for (int i = 0; i < pORDER; i++) begin
-      // Multipliers
-      if (irst)               mult[i] <= '0;
-      else if (iclk_ena)      mult[i] <= '0;
-          else                mult[i] <= $signed(z[i] * cCOEFS[i]);
-      // Accumulation
-      if (irst)               acc[i] <= '0;
-      else if (iclk_ena)      acc[i] <= '0;
-          else                acc[i] <= $signed(acc[i] + mult[i]);
+      if (irst)            mult[i] <= '0;
+      else if (iclk_ena)   mult[i] <= $signed(z[i]) * $signed(cCOEFS[i]);
     end
   end
 
-  // Output interface
-  always_ff@(posedge iclk) ena <= iena;
+  // Accumulation
+  always_comb begin
+    if (clk_ena) acc = 0;
+    else for (int i = 0; i < pORDER; i++) begin
+      acc = $signed(acc + mult[i]);
+    end
+  end
+
+  // Sink registers
+  always_ff@(posedge iclk) begin
+    if (iclk_ena) begin
+      ena <= ena << 1 | iena;
+      dat <= acc;
+    end
+  end
 
   //--------------------------------------------------------------------------------------------------------
   // Output signals
   //--------------------------------------------------------------------------------------------------------
 
-  assign oena = ena;
-  assign odat = acc[$high(acc)];
+  assign oena = ena[$high(ena)];
+  assign odat = dat;
 
 endmodule
