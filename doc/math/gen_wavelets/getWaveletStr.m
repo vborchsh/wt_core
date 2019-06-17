@@ -1,5 +1,5 @@
 
-function [res_Lo_D, res_Lo_R, res_Hi_D, res_Hi_R] = getWaveletStr(wt, prefix)
+function [res_Lo_D, res_Lo_R, res_Hi_D, res_Hi_R] = getWaveletStr(wt, prefix, coef)
 
   [Lo_D,Hi_D,Lo_R,Hi_R] = wfilters(wt);
   
@@ -11,7 +11,7 @@ function [res_Lo_D, res_Lo_R, res_Hi_D, res_Hi_R] = getWaveletStr(wt, prefix)
       res_Lo_D = [res_Lo_D, ','];
     end
 
-    res_Lo_D = [res_Lo_D, num2str(Lo_D(1, i), '%5.24f')];
+    res_Lo_D = [res_Lo_D, num2str(floor(coef * Lo_D(1, i)), '%d')];
   end
   res_Lo_D = [res_Lo_D, '};'];
   
@@ -23,7 +23,7 @@ function [res_Lo_D, res_Lo_R, res_Hi_D, res_Hi_R] = getWaveletStr(wt, prefix)
       res_Hi_D = [res_Hi_D, ','];
     end
 
-    res_Hi_D = [res_Hi_D, num2str(Hi_D(1, i), '%5.24f')];
+    res_Hi_D = [res_Hi_D, num2str(floor(coef * Hi_D(1, i)), '%d')];
   end
   res_Hi_D = [res_Hi_D, '};'];
   
@@ -35,7 +35,7 @@ function [res_Lo_D, res_Lo_R, res_Hi_D, res_Hi_R] = getWaveletStr(wt, prefix)
       res_Lo_R = [res_Lo_R, ','];
     end
 
-    res_Lo_R = [res_Lo_R, num2str(Lo_R(1, i), '%5.24f')];
+    res_Lo_R = [res_Lo_R, num2str(floor(coef * Lo_R(1, i)), '%d')];
   end
   res_Lo_R = [res_Lo_R, '};'];
   
@@ -47,7 +47,7 @@ function [res_Lo_D, res_Lo_R, res_Hi_D, res_Hi_R] = getWaveletStr(wt, prefix)
       res_Hi_R = [res_Hi_R, ','];
     end
 
-    res_Hi_R = [res_Hi_R, num2str(Hi_R(1, i), '%5.24f')];
+    res_Hi_R = [res_Hi_R, num2str(floor(coef * Hi_R(1, i)), '%d')];
   end
   res_Hi_R = [res_Hi_R, '};'];
 

@@ -1,3 +1,4 @@
-./sim/work
-./sim/*.wlf
-./sim/wave.do
+/sim/work
+
+/sim/*.wlf
+/sim/wave.do
