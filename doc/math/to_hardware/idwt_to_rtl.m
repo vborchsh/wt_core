@@ -4,7 +4,7 @@ clear all;
 clc;
 
 %% ------------------------------------------------------------------------------
-% Move one-step DWT to RTL code
+% Move one-step IDWT to RTL code
 
 %% PARAMETERS
 pW_DAT = 64;
@@ -13,9 +13,9 @@ pW_DAT = 64;
 %% Create and load Doebechi wavelet
 pCOEF = 16; % Working bit depth
 pWLT  = 'db6';
-[Lo_D, Hi_D] = wfilters(pWLT, 'd');
-Lo_D = floor(Lo_D .* 2^(pCOEF-1));
-Hi_D = floor(Hi_D .* 2^(pCOEF-1));
+[Lo_R, Hi_R] = wfilters(pWLT, 'r');
+Lo_R = floor(Lo_R .* 2^(pCOEF-1));
+Hi_R = floor(Hi_R .* 2^(pCOEF-1));
 % ------------------------------------------------------------------------------
 %% Create test data
 rng(1);
@@ -38,8 +38,8 @@ fclose(pF);
 datL = zeros(1, 2*length(dl)); datL(1, 1:2:end) = dl;
 datH = zeros(1, 2*length(dh)); datH(1, 1:2:end) = dh;
 % filtering
-lres = filter(Lo_D, 1, datL); lres = floor(lres(1, 1:end));
-hres = filter(Hi_D, 1, datH); hres = floor(hres(1, 1:end));
+lres = filter(Lo_R, 1, datL); lres = floor(lres(1, 1:end));
+hres = filter(Hi_R, 1, datH); hres = floor(hres(1, 1:end));
 res  = (lres(1, 1:end) + hres(1, 1:end));
 
 %% ------------------------------------------------------------------------------
